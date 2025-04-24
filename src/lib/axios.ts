@@ -1,6 +1,6 @@
 import axios from "axios";
 import { API_URL } from "./apiEndPoints";
-import { getSession } from "next-auth/react";
+import { getSession, signOut } from "next-auth/react";
 import { CustomUser } from "@/app/api/auth/[...nextauth]/authOption";
 
 const axiosClient = axios.create({
@@ -9,20 +9,39 @@ const axiosClient = axios.create({
     Accept: "application/json",
     "X-Requested-With": "XMLHttpRequest",
   },
+  timeout: 30000,
 });
 
 axiosClient.interceptors.request.use(
   async (config) => {
-    const session = await getSession();
-    if (session?.user) {
-      const user = session.user as CustomUser;
-      if (user.token) {
+    if (config.url?.includes("/public/")) {
+      return config;
+    }
+    try {
+      const session = await getSession();
+      const user = session?.user as CustomUser | undefined;
+
+      if (user?.token) {
         config.headers.Authorization = `Bearer ${user.token}`;
       }
+      return config;
+    } catch (error) {
+      console.error("Error getting session:", error);
+      return config; // Continue request without auth header
     }
-    return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+axiosClient.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    if (error.response?.status === 401) {
+      // toast.error("Session expired.");
+      await signOut({ callbackUrl: "/login" });
+    }
     return Promise.reject(error);
   }
 );

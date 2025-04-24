@@ -5,15 +5,42 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import useCart from "@/hooks/use-cart";
 import { formatter } from "@/lib/utils";
-import { Trash, XCircleIcon } from "lucide-react";
+import { ArrowRight, Trash, XCircleIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Product } from "../../../../../../type";
 import { toast } from "react-toastify";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
+import { CgSpinnerTwoAlt } from "react-icons/cg";
 
 export default function CartStore() {
-  const { items, removeAll, removeItem } = useCart();
+  const {
+    items,
+    addItem,
+    removeAll,
+    removeAllItem,
+    removeItem,
+    discount,
+    note,
+    setDiscount,
+    setNote,
+    removeDiscount,
+    removeNote,
+  } = useCart();
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+  const [discountInput, setDiscountInput] = useState<string>("");
+  const [noteInput, setNoteInput] = useState<string>("");
+  const [onOpenDiscount, setOpenDiscount] = useState<boolean>(false);
+  const [onOpenNote, setOpenNote] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const subTotal = useMemo(
     () =>
       items.reduce((acc, item) => {
@@ -24,18 +51,27 @@ export default function CartStore() {
 
   const totalTax = useMemo(
     () =>
-      items
-        .reduce((acc, item) => {
-          return acc + Number(item.tax) * (quantities[item.id] || 1);
-        }, 0)
-        .toFixed(2),
+      items.reduce((acc, item) => {
+        return acc + Number(item.tax) * (quantities[item.id] || 1);
+      }, 0),
     [items, quantities]
   );
 
-  const total = useMemo(
-    () => subTotal + Number(totalTax),
-    [subTotal, totalTax]
-  );
+  const total = useMemo(() => {
+    const subtotalWithTax = subTotal + Number(totalTax);
+
+    // Ensure discount is treated as 0 if undefined/null
+    const currentDiscount = discount?.value || 0;
+
+    if (discount?.type === "percent") {
+      const discountValue = subtotalWithTax * currentDiscount;
+      return subtotalWithTax - discountValue;
+    } else if (discount?.type === "amount") {
+      return Math.max(0, subtotalWithTax - currentDiscount);
+    }
+    // Default case when no discount type is set
+    return subtotalWithTax;
+  }, [subTotal, totalTax, discount, discount?.type]);
   useEffect(() => {
     setQuantities((prev) =>
       items.reduce(
@@ -58,10 +94,54 @@ export default function CartStore() {
     },
     [setQuantities]
   );
+  const applyDiscount = (type: "percent" | "amount") => {
+    if (type === "percent") {
+      // Convert percentage to decimal (e.g., 10% -> 0.1)
+      const percentValue =
+        Math.min(100, Math.max(0, Number(discountInput))) / 100;
+      setDiscount("percent", percentValue);
+    } else {
+      // Fixed amount discount
+      const amountValue = Math.min(
+        subTotal + Number(totalTax),
+        Math.max(0, Number(discountInput))
+      );
+      setDiscount("amount", amountValue);
+    }
+    setDiscountInput("");
+    setOpenDiscount(false);
+  };
+  const handleCreateNote = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent default form submission behavior
 
+    // Trim whitespace and check if note is not empty
+    const trimmedNote = noteInput.trim();
+
+    if (trimmedNote) {
+      setNote(trimmedNote);
+      setOpenNote(false);
+      setNoteInput("");
+    } else {
+      toast.warning("Please enter a valid note");
+    }
+  };
+  const handlePayNow = async () => {
+    try {
+      setIsLoading(true);
+      const updatedItems = items.map((item) => {
+        return { ...item, qty: quantities[item.id] };
+      });
+      removeAllItem();
+      updatedItems.forEach((item) => addItem(item));
+      router.push("/order")
+    } catch (error) {
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div className="grid grid-rows-12 gap-2 h-full">
-      <div className="row-span-8 flex flex-col">
+      <div className="row-span-6 flex flex-col">
         <div className="flex justify-between sticky top-0 z-10 bg-white dark:bg-gray-900">
           <div></div>
           <h1 className="text-center font-bold ">
@@ -153,25 +233,192 @@ export default function CartStore() {
           )}
         </div>
       </div>
-      <div className="row-span-4 h-full p-2 flex flex-col justify-between ">
-        <Separator className="my-2" />
-        <div className="bg-gray-100 p-4 rounded-xl relative before:content-[''] before:w-5 before:h-5 before:rounded-full before:bg-white before:absolute before:-left-2 before:top-1/2 before:-translate-y-1/2 after:content-[''] after:w-5 after:h-5 after:rounded-full after:bg-white after:absolute after:-right-2 after:top-1/2 after:-translate-y-1/2">
+      <div className="row-span-6 h-full flex flex-col justify-between space-y-1">
+        <div className="space-y-2 ">
+          <Separator className="my-1" />
           <ul className="space-y-1">
-            <li className="flex justify-between items-center">
-              <span className="font-semibold">Subtotal:</span>
+            <li className="flex justify-between items-center p-2 rounded-sm border-t">
+              <span className="font-semibold ">Subtotal:</span>
               <span>{formatter.format(subTotal)}</span>
             </li>
-            <li className="flex justify-between items-center">
+            <li className="flex justify-between items-center p-2 rounded-sm border-t">
               <span className="font-semibold">Tax:</span>
               <span>{formatter.format(Number(totalTax))}</span>
             </li>
-            <li className="border-t border-gray-300 pt-3 flex justify-between items-center text-lg font-bold">
-              <span>Total</span>
-              <span>{formatter.format(Number(total))}</span>
-            </li>
+            {discount?.value !== undefined && (
+              <li className="flex justify-between items-center p-2 rounded-sm border-t">
+                <span className="font-semibold">Discount:</span>
+                <span className="flex items-center space-x-6">
+                  <span>
+                    {discount.type === "percent"
+                      ? `${(Number(discount?.value) * 100).toFixed(0)}%`
+                      : formatter.format(Number(discount?.value))}
+                  </span>{" "}
+                  <span
+                    className=" cursor-pointer"
+                    onClick={() => removeDiscount()}
+                  >
+                    <XCircleIcon className="text-foreground w-4 h-4" />
+                  </span>
+                </span>
+              </li>
+            )}
+            {note && (
+              <li className="p-2 rounded-sm border-t w-full">
+                <span className="flex justify-between items-center">
+                  <span className="font-semibold flex-shrink-0">Note:</span>
+                  <span
+                    className=" cursor-pointer"
+                    onClick={() => removeNote()}
+                  >
+                    <XCircleIcon className="text-foreground w-4 h-4" />
+                  </span>
+                </span>
+
+                <div className="w-full line-clamp-1">{note}</div>
+              </li>
+            )}
           </ul>
         </div>
-        <Button variant={"default"}>Continue to Payment</Button>
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <DropdownMenu
+              open={onOpenDiscount}
+              onOpenChange={() => setOpenDiscount(!onOpenDiscount)}
+            >
+              <DropdownMenuTrigger asChild>
+                <Button variant={"secondary"}>
+                  {discount ? "Edit Discount" : "Add Discount"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64 p-2 space-y-2 bg-background border rounded-lg shadow-md">
+                {/* Display Input */}
+                <input
+                  type="text"
+                  value={discountInput}
+                  readOnly
+                  className="w-full text-xl font-bold text-center border-b pb-2 outline-none"
+                />
+
+                {/* Numeric Keypad */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[7, 8, 9, 4, 5, 6, 1, 2, 3, 0].map((num) => (
+                    <Button
+                      key={num}
+                      variant={"outline"}
+                      className="text-xl"
+                      onClick={() => setDiscountInput((prev) => prev + num)}
+                    >
+                      {num}
+                    </Button>
+                  ))}
+                  <Button
+                    variant={"outline"}
+                    onClick={() => {
+                      // Only add decimal if there isn't one already
+                      if (!discountInput.includes(".")) {
+                        setDiscountInput((prev) => prev + ".");
+                      }
+                    }}
+                    className="text-xl"
+                  >
+                    .
+                  </Button>
+                  <Button
+                    variant={"outline"}
+                    onClick={() => setDiscountInput("")}
+                  >
+                    <XCircleIcon className="w-5 h-5" />
+                  </Button>
+                </div>
+
+                {/* Discount Type Buttons */}
+                <div className="flex justify-between mt-2">
+                  <Button
+                    className="w-1/2"
+                    variant={"outline"}
+                    onClick={() => applyDiscount("percent")}
+                  >
+                    % Discount
+                  </Button>
+                  <Button
+                    className="w-1/2"
+                    variant={"outline"}
+                    onClick={() => applyDiscount("amount")}
+                  >
+                    $ Discount
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu
+              open={onOpenNote}
+              onOpenChange={() => setOpenNote(!onOpenNote)}
+            >
+              <DropdownMenuTrigger asChild>
+                <Button variant={"secondary"}>
+                  {note ? "Edit Note" : "Add Note"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                className="w-64 p-2 space-y-2 bg-background border rounded-lg shadow-md"
+              >
+                <form onSubmit={handleCreateNote} className="space-y-4">
+                  <div className="space-y-1">
+                    <Label>Note</Label>
+                    <Input
+                      type="text"
+                      value={noteInput}
+                      onChange={(e) => setNoteInput(e.target.value)}
+                      placeholder="Write your note here..."
+                    />
+                  </div>
+                  <Button type="submit" variant={"outline"} className="w-full">
+                    {note ? "Update Note" : "Add Note"}
+                  </Button>
+                  {note && (
+                    <Button
+                      type="button"
+                      variant={"destructive"}
+                      className="w-full"
+                      onClick={() => {
+                        setNoteInput("");
+                        setNote("");
+                        setOpenNote(false);
+                        toast.info("Note removed");
+                      }}
+                    >
+                      Remove Note
+                    </Button>
+                  )}
+                </form>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div>
+            <Button
+              disabled={items.length === 0}
+              variant={"default"}
+              className="flex justify-between w-full py-6"
+              onClick={handlePayNow}
+            >
+              {isLoading && <CgSpinnerTwoAlt className=" animate-spin" />}
+              {isLoading ? (
+                "Loading..."
+              ) : (
+                <>
+                  <span>Pay Now</span>
+                  <span className=" space-x-2 flex items-center">
+                    <span>{formatter.format(Number(total))}</span>
+                    <ArrowRight />
+                  </span>
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

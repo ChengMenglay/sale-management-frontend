@@ -3,6 +3,7 @@ import CellAction from "./cell-action";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import BarcodeCell from "@/components/BarcodeCell";
 export type InventoryColumn = {
   id: number;
   name: string;
@@ -61,6 +62,10 @@ export const columns: ColumnDef<InventoryColumn>[] = [
   {
     accessorKey: "tax",
     header: "Tax",
+  },
+  {
+    accessorKey: "barcode",
+    cell: ({ row }) => <BarcodeCell barcode={row.original.barcode} />,
   },
   {
     accessorKey: "status",

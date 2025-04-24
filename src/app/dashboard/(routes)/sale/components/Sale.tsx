@@ -11,9 +11,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SortDescIcon } from "lucide-react";
+import { ScanBarcode, SortDescIcon } from "lucide-react";
 import NoResult from "@/components/NoResult";
 import CartStore from "./CartStore";
+import ScannerPage from "@/components/Scanner";
+import useCart from "@/hooks/use-cart";
+import { toast } from "react-toastify";
 
 interface SaleProps {
   products: Product[] | null;
@@ -27,6 +30,9 @@ export default function Sale({ products, categories }: SaleProps) {
     null
   );
   const [searchProducts, setSearchProducts] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { addItem } = useCart();
 
   const onSort = (id: number | null) => {
     setSelectedCategoryId(id);
@@ -47,22 +53,32 @@ export default function Sale({ products, categories }: SaleProps) {
     }
     if (term) {
       filterdProducts = filterdProducts.filter((product) =>
-        product.name.toLowerCase().includes(term)
+        product.barcode.toLowerCase().includes(term)
       );
     }
 
     setFilterdProducts(filterdProducts);
   };
+  const handleBarcode = (value: string) => {
+    const productFilterBarcode = products?.find(
+      (product) => product.barcode === value
+    );
+    if (productFilterBarcode) {
+      addItem(productFilterBarcode as Product);
+    } else {
+      toast.info("Product barcode is not found!");
+    }
+  };
   return (
     <>
-      <Card className="lg:col-span-8  md:col-span-6 md:h-[80vh]  h-auto row-span-8 space-y-2 p-4 flex flex-col rounded-sm">
+      <Card className="lg:col-span-8  md:col-span-6 md:h-[80vh] md:row-span-8 row-span-6 space-y-2 p-4 flex flex-col rounded-sm">
         <div className=" flex justify-between static md:sticky md:top-0 z-10 gap-4">
           <Input
             value={searchProducts}
             onChange={onSearch}
-            placeholder="Search product..."
+            placeholder="Search product barcode..."
           />
-          <div>
+          <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant={"secondary"} size={"icon"}>
@@ -83,6 +99,27 @@ export default function Sale({ products, categories }: SaleProps) {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+            <DropdownMenu
+              open={isScanning}
+              onOpenChange={() => {
+                setIsScanning(!isScanning);
+                setIsLoading(!isLoading);
+              }}
+            >
+              <DropdownMenuTrigger asChild>
+                <Button variant={"secondary"} size={"icon"}>
+                  <ScanBarcode />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {isScanning && (
+                  <ScannerPage
+                    disable={isLoading}
+                    onChange={(value) => handleBarcode(value)}
+                  />
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         <div className="overflow-y-auto flex-grow mt-2">
@@ -99,7 +136,7 @@ export default function Sale({ products, categories }: SaleProps) {
           )}
         </div>
       </Card>
-      <Card className=" lg:col-span-4 md:col-span-6 md:h-[80vh] h-[80vh] row-span-4 flex flex-col rounded-sm p-4">
+      <Card className=" lg:col-span-4 md:col-span-6 md:h-[80vh] md:row-span-4 row-span-6 flex flex-col rounded-sm p-4">
         <CartStore />
       </Card>
     </>
