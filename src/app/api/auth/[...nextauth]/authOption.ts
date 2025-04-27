@@ -4,14 +4,14 @@ import { AuthOptions, Session, ISODateString, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 export interface CustomSession extends Session {
-  user?: CustomUser;
+  user: CustomUser; // ← remove the optional ?
   expires: ISODateString;
   expired: boolean;
   accessToken: string | null;
 }
 
 export type CustomUser = {
-  id?: string | null;
+  id: number;
   name?: string | null;
   email?: string | null;
   profile_image?: string | null;
@@ -26,34 +26,40 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        const customUser = user as CustomUser; // Explicitly type user
-        token.user = customUser;
-        token.accessToken = customUser.token; // This prevents TypeScript errors
-        token.accessTokenExpires = Date.now() + 7 * 24 * 60 * 60 * 1000;
-      }
-
-      // Check if token is expired
-      if (
-        token.accessTokenExpires &&
-        Date.now() > (token.accessTokenExpires as number)
-      ) {
-        console.log("Token expired");
+        const customUser = user as unknown as CustomUser;
         return {
           ...token,
-          expired: true, // Add expired flag
-          accessToken: null, // Clear the token
+          user: customUser,
+          accessToken: customUser.token,
+          accessTokenExpires: Date.now() + 7 * 24 * 60 * 60 * 1000,
         };
       }
-      return token;
+    
+      // Return previous token if not expired
+      if (Date.now() < (token.accessTokenExpires as number)) {
+        return token;
+      }
+    
+      // Token is expired
+      return {
+        ...token,
+        expired: true,
+        accessToken: null,
+      };
     },
     async session({ session, token }) {
+      const sessionExpires = new Date(
+        token.accessTokenExpires as number
+      ).toISOString();
+    
       return {
         ...session,
         user: token.user as CustomUser,
+        expires: sessionExpires,
         expired: token.expired as boolean | undefined,
-        accessToken: token.expired ? null : token.accessToken,
+        accessToken: token.expired ? null : (token.accessToken as string),
       };
-    },
+    }
   },
   providers: [
     CredentialsProvider({

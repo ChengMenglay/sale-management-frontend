@@ -133,7 +133,7 @@ export default function CartStore() {
       });
       removeAllItem();
       updatedItems.forEach((item) => addItem(item));
-      router.push("/order")
+      router.push("/order");
     } catch (error) {
     } finally {
       setIsLoading(false);
@@ -142,7 +142,7 @@ export default function CartStore() {
   return (
     <div className="grid grid-rows-12 gap-2 h-full">
       <div className="row-span-6 flex flex-col">
-        <div className="flex justify-between sticky top-0 z-10 bg-white dark:bg-gray-900">
+        <div className="flex justify-between sticky top-0 z-10 ">
           <div></div>
           <h1 className="text-center font-bold ">
             Cart Detail {`(${items.length})`}

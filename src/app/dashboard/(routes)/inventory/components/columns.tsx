@@ -63,10 +63,10 @@ export const columns: ColumnDef<InventoryColumn>[] = [
     accessorKey: "tax",
     header: "Tax",
   },
-  {
-    accessorKey: "barcode",
-    cell: ({ row }) => <BarcodeCell barcode={row.original.barcode} />,
-  },
+  // {
+  //   accessorKey: "barcode",
+  //   cell: ({ row }) => <BarcodeCell barcode={row.original.barcode} />,
+  // },
   {
     accessorKey: "status",
     cell: ({ row }) =>

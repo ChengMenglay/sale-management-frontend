@@ -12,10 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import useCart from "@/hooks/use-cart";
+import axiosClient from "@/lib/axios";
 import { formatter } from "@/lib/utils";
 import { Banknote, CreditCard, Landmark, LucideIcon } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { CgSpinnerAlt } from "react-icons/cg";
+import { toast } from "react-toastify";
 
 type PaymentType = "Cash" | "ABA" | "Credit Card";
 
@@ -26,10 +30,12 @@ const paymentMethod: { name: PaymentType; icon: LucideIcon }[] = [
 ];
 
 export default function OrderDetail() {
-  const { items, discount } = useCart();
+  const { data: session } = useSession();
+  const { items, discount, note, removeAll } = useCart();
   const [selectedPayment, setSelectedPayment] = useState<PaymentType>("Cash");
   const [paidMoney, setPaidMoney] = useState("");
   const [currency, setCurrency] = useState<"dollar" | "riel">("dollar");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const subTotal = items.reduce(
@@ -54,7 +60,63 @@ export default function OrderDetail() {
   const paidInDollar = currency === "riel" ? paid / riel : paid;
   const change = Math.max(Number((paidInDollar - Number(total)).toFixed(2)), 0);
 
-  const totalInRiel = Math.ceil(Number((total * riel).toFixed(0)) / 100) * 100;
+  const totalInRiel = Math.round((total * riel) / 100) * 100;
+  const handlePaymentProcessing = async () => {
+    try {
+      setLoading(true);
+      const isFullyPaid = paidInDollar >= Number(total.toFixed(2));
+      const payload = {
+        user_id: session?.user?.id,
+        discount: Number(discountAmount) || 0,
+        note: note || "",
+        payment_method: selectedPayment,
+        payment_status: isFullyPaid ? "Paid" : "Partial",
+        order_status: isFullyPaid ? "Completed" : "Pending",
+        amount_paid: Number(paidInDollar),
+        total: Number(total.toFixed(2)),
+      };
+      const order = await axiosClient.post("/orders", payload);
+      if (order.status === 201) {
+        try {
+          await Promise.all(
+            items.map((item) =>
+              axiosClient
+                .post("/order_details", {
+                  order_id: order.data.data.id,
+                  product_id: item.id,
+                  price: item.price,
+                  order_quantity: item.qty,
+                })
+                .catch((error) => {
+                  console.log("Failed to create order_detail", error);
+                  toast.error("Failed to create order_detail");
+                })
+            )
+          );
+          await Promise.all(
+            items.map((item) =>
+              axiosClient.put(`/product/${item.id}`, {
+                ...item,
+                stock: Number(item.stock - Number(item?.qty)),
+              })
+            )
+          );
+          toast.success("Payment processed and order created!");
+          removeAll(); // Clear cart on success
+          router.push(`/order/${order.data.data.id}`);
+        } catch (detailError) {
+          // If order details fail, delete the order to maintain consistency
+          // await axiosClient.delete(`/orders/${order.data.data.id}`);
+          toast.error("Failed to create order items");
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      toast.warning("Something went wrong, cannot process the payment!");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Card className="grid grid-cols-1 sm:grid-cols-12 gap-4 h-full">
@@ -154,53 +216,47 @@ export default function OrderDetail() {
             </div>
           ))}
         </div>
-
-        {/* Cash Input */}
-        {selectedPayment === "Cash" && (
-          <div className="bg-gray-100 p-4 rounded-md space-y-3">
-            <Label htmlFor="cash-input">Customer Paid</Label>
-            <div className="flex items-center space-x-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="icon" variant="outline">
-                    {currency === "dollar" ? "$" : "៛"}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setCurrency("dollar")}>
-                    Dollar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setCurrency("riel")}>
-                    Riel
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Input
-                id="cash-input"
-                type="number"
-                min={0}
-                className="bg-white"
-                value={paidMoney}
-                onChange={(e) => setPaidMoney(e.target.value)}
-              />
-            </div>
-            {selectedPayment === "Cash" && paid < total && (
-              <p className="text-red-500 text-sm">
-                Insufficient payment amount.
-              </p>
-            )}
+        <div className="bg-gray-100 p-4 rounded-md space-y-3">
+          <Label htmlFor="cash-input">Customer Paid</Label>
+          <div className="flex items-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="outline">
+                  {currency === "dollar" ? "$" : "៛"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setCurrency("dollar")}>
+                  Dollar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCurrency("riel")}>
+                  Riel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Input
+              id="cash-input"
+              type="number"
+              min={0}
+              className="bg-white"
+              value={paidMoney}
+              onChange={(e) => setPaidMoney(e.target.value)}
+            />
           </div>
-        )}
-
+          {paidMoney && paidInDollar < Number(total.toFixed(2)) && (
+            <p className="text-red-500 text-sm">Insufficient payment amount.</p>
+          )}
+          <h1 className="text-xs text-gray-500">1$=4100៛</h1>
+        </div>
         {/* Change */}
         <div className="border rounded-lg p-4 text-center">
           <span className="text-sm">Change Money: </span>
           <span className="font-semibold">
             {currency === "dollar"
               ? `$${change.toFixed(2)}`
-              : `៛${
-                  Math.ceil(Number((change * riel).toFixed(0)) / 100) * 100
-                }`.toLocaleString()}
+              : `៛${(
+                  Math.round((change * riel) / 100) * 100
+                ).toLocaleString()}`}
           </span>
         </div>
 
@@ -211,12 +267,13 @@ export default function OrderDetail() {
           </Button>
           <Button
             disabled={
-              selectedPayment === "Cash" &&
               paid <
-                (currency === "dollar" ? Number(total.toFixed(2)) : totalInRiel)
+              (currency === "dollar" ? Number(total.toFixed(2)) : totalInRiel)
             }
+            onClick={handlePaymentProcessing}
           >
-            Process Payment
+            {loading && <CgSpinnerAlt className=" animate-spin" />}
+            {loading ? "Loading..." : " Process Payment"}
           </Button>
         </div>
       </div>

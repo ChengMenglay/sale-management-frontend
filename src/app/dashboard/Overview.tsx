@@ -1,24 +1,30 @@
 "use client";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { CustomSession } from "../api/auth/[...nextauth]/authOption";
 import { toast } from "react-toastify";
 
 export default function Overview() {
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    if (!session || !session.expires) return;
-
+    if (status === "loading" || !session?.expires) return;
+  
     const expirationTime = new Date(session.expires).getTime();
-    const currentTime = new Date().getTime();
+    const currentTime = Date.now();
     const timeUntilLogout = expirationTime - currentTime;
-
-    if (timeUntilLogout <= 0) {
-      toast.warning("Session expired. Signing out...");
+  
+    // Add a minimum threshold (e.g., 10 seconds)
+    if (timeUntilLogout < 10000) {
       signOut({ callbackUrl: "/login" });
+      return;
     }
-  }, [session]);
+  
+    const timer = setTimeout(() => {
+      signOut({ callbackUrl: "/login" });
+    }, timeUntilLogout);
+  
+    return () => clearTimeout(timer);
+  }, [session, status]);
 
   return <div>Overview</div>;
 }

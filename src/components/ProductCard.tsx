@@ -28,10 +28,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           sizes="(max-width: 768px) 100vw, 50vw"
         />
       </div>
-      <div className="space-y-2 flex flex-col flex-1 justify-between">
+      <div className="space-y-1 flex flex-col flex-1 justify-between">
         <h1 className="md:text-xs text-sm font-semibold dark:text-black truncate">
           {product?.name}
         </h1>
+        <p className="text-xs text-gray-500">Stock: {product?.stock}</p>
         <p className="font-extrabold text-red-500">
           {formatter.format(Number(product?.price))}
         </p>

@@ -11,12 +11,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ScanBarcode, SortDescIcon } from "lucide-react";
+import { Plus, ScanBarcode, SortDescIcon } from "lucide-react";
 import NoResult from "@/components/NoResult";
 import CartStore from "./CartStore";
 import ScannerPage from "@/components/Scanner";
 import useCart from "@/hooks/use-cart";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface SaleProps {
   products: Product[] | null;
@@ -33,7 +39,7 @@ export default function Sale({ products, categories }: SaleProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { addItem } = useCart();
-
+  const router = useRouter();
   const onSort = (id: number | null) => {
     setSelectedCategoryId(id);
     ProductFilter(searchProducts, id);
@@ -79,47 +85,75 @@ export default function Sale({ products, categories }: SaleProps) {
             placeholder="Search product barcode..."
           />
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant={"secondary"} size={"icon"}>
-                  <SortDescIcon />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => onSort(null)}>
-                  All
-                </DropdownMenuItem>
-                {categories?.map((category) => (
-                  <DropdownMenuItem
-                    key={category.id}
-                    onClick={() => onSort(category.id)}
-                  >
-                    {category.name}
+            <HoverCard>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <HoverCardTrigger asChild>
+                    <Button variant={"secondary"} size={"icon"}>
+                      <SortDescIcon />
+                    </Button>
+                  </HoverCardTrigger>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => onSort(null)}>
+                    All
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu
-              open={isScanning}
-              onOpenChange={() => {
-                setIsScanning(!isScanning);
-                setIsLoading(!isLoading);
-              }}
-            >
-              <DropdownMenuTrigger asChild>
-                <Button variant={"secondary"} size={"icon"}>
-                  <ScanBarcode />
+                  {categories?.map((category) => (
+                    <DropdownMenuItem
+                      key={category.id}
+                      onClick={() => onSort(category.id)}
+                    >
+                      {category.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <HoverCardContent className="p-2 shadow-none border-[1px] border-foreground w-28">
+                <h1 className="text-xs text-center">Sort Items</h1>
+              </HoverCardContent>
+            </HoverCard>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <Button
+                  onClick={() => router.push("/dashboard/inventory/new")}
+                  size={"icon"}
+                  variant={"secondary"}
+                >
+                  <Plus />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {isScanning && (
-                  <ScannerPage
-                    disable={isLoading}
-                    onChange={(value) => handleBarcode(value)}
-                  />
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </HoverCardTrigger>
+              <HoverCardContent className="p-2 shadow-none border-[1px] border-foreground w-28">
+                <h1 className="text-xs text-center">Add new item</h1>
+              </HoverCardContent>
+            </HoverCard>
+            <HoverCard>
+              <DropdownMenu
+                open={isScanning}
+                onOpenChange={() => {
+                  setIsScanning(!isScanning);
+                  setIsLoading(!isLoading);
+                }}
+              >
+                <DropdownMenuTrigger asChild>
+                  <HoverCardTrigger asChild>
+                    <Button variant={"secondary"} size={"icon"}>
+                      <ScanBarcode />
+                    </Button>
+                  </HoverCardTrigger>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {isScanning && (
+                    <ScannerPage
+                      disable={isLoading}
+                      onChange={(value) => handleBarcode(value)}
+                    />
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <HoverCardContent className="p-2 shadow-none border-[1px] border-foreground w-28">
+                <h1 className="text-xs text-center">Scan barcode</h1>
+              </HoverCardContent>
+            </HoverCard>
           </div>
         </div>
         <div className="overflow-y-auto flex-grow mt-2">
