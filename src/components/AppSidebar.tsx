@@ -11,8 +11,8 @@ import {
   SidebarMenuItem,
 } from "./ui/sidebar";
 import {
-  BadgeCheck,
   ChevronsUpDown,
+  ClipboardList,
   Grid2X2Plus,
   PackageSearch,
   ShoppingCart,
@@ -20,19 +20,16 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { getServerSession, Session } from "next-auth";
 import authOptions, {
   CustomUser,
 } from "@/app/api/auth/[...nextauth]/authOption";
-import { Button } from "./ui/button";
 import Signout from "./Signout";
 import { Separator } from "./ui/separator";
 
@@ -56,6 +53,11 @@ const items = [
     title: "Category",
     url: "/dashboard/category",
     icon: Grid2X2Plus,
+  },
+  {
+    title: "Orders",
+    url: "/dashboard/orders",
+    icon: ClipboardList,
   },
 ];
 export default async function AppSidebar() {

@@ -15,7 +15,7 @@ export default function InventoryClient({
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center items-start sm:justify-between space-y-3">
-        <Header title="Product" subtitle="Manage product for you store." />
+        <Header title="Product" subtitle="Manage product for you store." total={products.length} />
         <Button
           variant={"secondary"}
           onClick={() => router.push("/dashboard/inventory/new")}

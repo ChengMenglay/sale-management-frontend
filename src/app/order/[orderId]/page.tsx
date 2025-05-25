@@ -8,7 +8,7 @@ import Invoice from "./Invoice";
 export default async function InvoicePage({
   params,
 }: {
-  params: { orderId: string };
+  params: Promise<{ orderId: string }>;
 }) {
   const { orderId } = await params;
   const session: CustomSession | null = await getServerSession(authOptions);

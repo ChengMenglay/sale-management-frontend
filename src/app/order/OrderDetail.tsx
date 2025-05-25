@@ -42,10 +42,13 @@ export default function OrderDetail() {
     (acc, item) => acc + item.price * Number(item.qty),
     0
   );
-  const totalTax = items.reduce(
-    (acc, item) => acc + Number(item.tax) * Number(item.qty),
-    0
-  );
+  const totalTax = items.reduce((acc, item) => {
+    const price = Number(item.price);
+    const taxRate = Number(item.tax) / 100; // convert from 10 to 0.1
+    const qty = item.qty || 1;
+    return acc + price * taxRate * qty; // Tax = price * taxRate * quantity
+  }, 0);
+
   const subtotalWithTax = subTotal + totalTax;
 
   const discountAmount =
@@ -70,7 +73,7 @@ export default function OrderDetail() {
         discount: Number(discountAmount) || 0,
         note: note || "",
         payment_method: selectedPayment,
-        payment_status: isFullyPaid ? "Paid" : "Partial",
+        payment_status: isFullyPaid ? "Paid" : "Pending",
         order_status: isFullyPaid ? "Completed" : "Pending",
         amount_paid: Number(paidInDollar),
         total: Number(total.toFixed(2)),
@@ -105,6 +108,7 @@ export default function OrderDetail() {
           removeAll(); // Clear cart on success
           router.push(`/order/${order.data.data.id}`);
         } catch (detailError) {
+          console.log("Failed to create order items", detailError);
           // If order details fail, delete the order to maintain consistency
           // await axiosClient.delete(`/orders/${order.data.data.id}`);
           toast.error("Failed to create order items");
@@ -121,7 +125,7 @@ export default function OrderDetail() {
   return (
     <Card className="grid grid-cols-1 sm:grid-cols-12 gap-4 h-full">
       {/* Summary Panel */}
-      <div className="sm:col-span-5 p-4 sm:p-6 bg-gray-50 flex flex-col gap-6">
+      <div className="sm:col-span-5 p-4 sm:p-6 bg-gray-50 dark:bg-transparent flex flex-col gap-6">
         <div>
           <h2 className="text-xl font-bold mb-2">Sale Summary</h2>
           <Separator />
@@ -207,7 +211,7 @@ export default function OrderDetail() {
               onClick={() => setSelectedPayment(method.name)}
               className={`flex items-center justify-center gap-2 border rounded-lg p-3 cursor-pointer transition ${
                 selectedPayment === method.name
-                  ? "bg-gray-200 border-gray-300"
+                  ? "bg-gray-200 dark:bg-gray-700"
                   : "border-gray-200"
               }`}
             >
@@ -216,7 +220,7 @@ export default function OrderDetail() {
             </div>
           ))}
         </div>
-        <div className="bg-gray-100 p-4 rounded-md space-y-3">
+        <div className="border p-4 rounded-md space-y-3">
           <Label htmlFor="cash-input">Customer Paid</Label>
           <div className="flex items-center space-x-2">
             <DropdownMenu>
@@ -238,7 +242,7 @@ export default function OrderDetail() {
               id="cash-input"
               type="number"
               min={0}
-              className="bg-white"
+              className="bg-white dark:bg-transparent"
               value={paidMoney}
               onChange={(e) => setPaidMoney(e.target.value)}
             />

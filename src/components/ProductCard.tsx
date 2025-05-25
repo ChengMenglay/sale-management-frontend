@@ -3,7 +3,6 @@ import React from "react";
 import { Product } from "../../type";
 import Image from "next/image";
 import { formatter } from "@/lib/utils";
-import { Button } from "./ui/button";
 import useCart from "@/hooks/use-cart";
 
 interface ProductCardProps {

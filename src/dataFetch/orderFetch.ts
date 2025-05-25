@@ -1,6 +1,6 @@
 import axiosClient from "@/lib/axios";
 
-export const getByOrderId = async (id: number,token:string) => {
+export const getByOrderId = async (id: number, token: string) => {
   try {
     const res = await axiosClient.get(`/order_details/by-order/${id}`, {
       headers: {
@@ -10,6 +10,20 @@ export const getByOrderId = async (id: number,token:string) => {
     return res.data.data;
   } catch (error) {
     console.error("Failed to fetch order details:", error);
+    throw error;
+  }
+};
+
+export const getOrders = async (token: string) => {
+  try {
+    const res = await axiosClient.get("/orders", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data.data;
+  } catch (error) {
+    console.error("Failed to fetch orders:", error);
     throw error;
   }
 };

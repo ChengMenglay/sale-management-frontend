@@ -10,7 +10,7 @@ export default async function Category() {
   const session: CustomSession | null = await getServerSession(authOptions);
   const categories = await getCategories(session?.user?.token as string);
   const formattedCategoryColumn: CategoryColumn[] = categories.data.map(
-    (category: any) => ({
+    (category: CategoryColumn) => ({
       id: category.id,
       name: category.name,
       created_at: category.created_at,

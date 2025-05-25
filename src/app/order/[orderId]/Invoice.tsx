@@ -5,20 +5,24 @@ import { OrderDetail } from "../../../../type";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 type OrderDetailType = {
   orderDetails: OrderDetail[];
 };
 
 export default function Invoice({ orderDetails }: OrderDetailType) {
-  const totalAmount = orderDetails.reduce(
-    (total, detail) => total + detail.price * detail.order_quantity,
-    0
-  );
+  const [isMounted, setIsMounted] = useState(false);
+  const totalAmount = Number(orderDetails[0].order.total);
   const router = useRouter();
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <Card className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg">
@@ -73,6 +77,9 @@ export default function Invoice({ orderDetails }: OrderDetailType) {
                   Product
                 </th>
                 <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
+                  Tax
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
                   Quantity
                 </th>
                 <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
@@ -90,6 +97,9 @@ export default function Invoice({ orderDetails }: OrderDetailType) {
                     {detail.product.name}
                   </td>
                   <td className="px-4 py-2 text-sm text-gray-800">
+                    {detail.product.tax + "%"}
+                  </td>
+                  <td className="px-4 py-2 text-sm text-gray-800">
                     {detail.order_quantity}
                   </td>
                   <td className="px-4 py-2 text-sm text-gray-800">
@@ -105,13 +115,19 @@ export default function Invoice({ orderDetails }: OrderDetailType) {
         </section>
         {/* Total Price Section */}
         <section className="mt-6 border-t pt-4">
-          <div className="flex justify-end items-center">
-            <span className="flex items-center space-x-4">
+          <div className="flex flex-col justify-center items-end">
+            <div className="flex items-center space-x-4">
+              <p className="font-semibold text-sm text-gray-700">Discount:</p>
+              <p className="font-bold text-sm text-gray-800">
+                ${Number(orderDetails[0].order.discount).toFixed(2)}
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
               <p className="font-semibold text-gray-700">Total Amount:</p>
               <p className="font-bold text-xl text-gray-800">
                 ${totalAmount.toFixed(2)}
               </p>
-            </span>
+            </div>
           </div>
         </section>
         {/* Footer Section with Additional Info */}

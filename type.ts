@@ -29,6 +29,7 @@ export interface Product {
 export interface Order {
   id: number;
   user_id: number;
+  user: User;
   discount: number;
   note: string;
   payment_method: string;
@@ -36,6 +37,7 @@ export interface Order {
   order_status: string;
   amount_paid: number;
   total: number;
+  created_at: Date;
 }
 export interface OrderDetail {
   id: number;

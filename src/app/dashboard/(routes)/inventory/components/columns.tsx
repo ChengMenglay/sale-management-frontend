@@ -3,12 +3,11 @@ import CellAction from "./cell-action";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import BarcodeCell from "@/components/BarcodeCell";
 export type InventoryColumn = {
   id: number;
   name: string;
   image: string;
-  price: string;
+  price: number;
   stock: number;
   tax?: number;
   detail?: string;

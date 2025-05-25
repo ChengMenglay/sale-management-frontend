@@ -7,9 +7,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Copy, Edit, MoreHorizontal, Trash } from "lucide-react";
+import { Copy, MoreHorizontal, Trash } from "lucide-react";
 import React, { useState } from "react";
-import { CategoryColumn } from "./columns";
+import { OrdersColumn } from "./columns";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import {
@@ -26,7 +26,7 @@ import axiosClient from "@/lib/axios";
 import { CgSpinnerTwoAlt } from "react-icons/cg";
 
 type CellActionProps = {
-  data: CategoryColumn;
+  data: OrdersColumn;
 };
 export default function CellAction({ data }: CellActionProps) {
   const router = useRouter();
@@ -34,19 +34,19 @@ export default function CellAction({ data }: CellActionProps) {
   const [isLoading, setIsLoading] = useState(false);
   const onCopy = (id: string) => {
     navigator.clipboard.writeText(id);
-    toast.success("Category id copied");
+    toast.success("Order id copied");
   };
   const onDelete = async () => {
     try {
       setIsLoading(true);
-      await axiosClient.delete(`/category/${data.id}`);
-      toast.success("Category deleted");
+      await axiosClient.delete(`/orders/${data.id}`);
+      toast.success("Order deleted");
       router.refresh();
-      router.push(`/dashboard/category`);
+      router.push(`/dashboard/orders`);
       setIsOpen(false);
       router.refresh();
     } catch (error) {
-      console.error(error);
+      console.log(error);
       toast.error("Something went wrong!");
     } finally {
       setIsLoading(false);
@@ -95,12 +95,16 @@ export default function CellAction({ data }: CellActionProps) {
             <Copy className="w-4 h-4" />
             Copy Id
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => router.push(`/dashboard/category/${data.id}`)}
+          <DropdownMenuItem onClick={() => router.push(`/order/${data.id}`)}>
+            <Copy className="w-4 h-4" />
+            View Order
+          </DropdownMenuItem>
+          {/* <DropdownMenuItem
+            onClick={() => router.push(`/dashboard/orders/${data.id}`)}
           >
             <Edit className="w-4 h-4" />
             Update
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
           <DropdownMenuItem onClick={() => setIsOpen(true)}>
             <Trash className="w-4 h-4" />
             Delete

@@ -52,7 +52,10 @@ export default function CartStore() {
   const totalTax = useMemo(
     () =>
       items.reduce((acc, item) => {
-        return acc + Number(item.tax) * (quantities[item.id] || 1);
+        const price = Number(item.price);
+        const taxRate = Number(item.tax) / 100; // convert from 10 to 0.1
+        const qty = quantities[item.id] || 1;
+        return acc + price * taxRate * qty; // Tax = price * taxRate * quantity
       }, 0),
     [items, quantities]
   );
@@ -71,7 +74,7 @@ export default function CartStore() {
     }
     // Default case when no discount type is set
     return subtotalWithTax;
-  }, [subTotal, totalTax, discount, discount?.type]);
+  }, [totalTax, subTotal, discount?.value, discount?.type]);
   useEffect(() => {
     setQuantities((prev) =>
       items.reduce(
@@ -135,6 +138,7 @@ export default function CartStore() {
       updatedItems.forEach((item) => addItem(item));
       router.push("/order");
     } catch (error) {
+      console.error("Error during checkout:", error);
     } finally {
       setIsLoading(false);
     }

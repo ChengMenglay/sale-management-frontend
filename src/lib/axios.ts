@@ -3,6 +3,7 @@ import { API_URL } from "./apiEndPoints";
 import { getSession, signOut } from "next-auth/react";
 import { CustomUser } from "@/app/api/auth/[...nextauth]/authOption";
 
+const isClient = typeof window !== 'undefined';
 const axiosClient = axios.create({
   baseURL: API_URL,
   headers: {
@@ -12,38 +13,40 @@ const axiosClient = axios.create({
   timeout: 30000,
 });
 
-axiosClient.interceptors.request.use(
-  async (config) => {
-    if (config.url?.includes("/public/")) {
-      return config;
-    }
-    try {
-      const session = await getSession();
-      const user = session?.user as CustomUser | undefined;
-
-      if (user?.token) {
-        config.headers.Authorization = `Bearer ${user.token}`;
+if (isClient) {
+  axiosClient.interceptors.request.use(
+    async (config) => {
+      if (config.url?.includes("/public/")) {
+        return config;
       }
-      return config;
-    } catch (error) {
-      console.error("Error getting session:", error);
-      return config; // Continue request without auth header
+      try {
+        const session = await getSession();
+        const user = session?.user as CustomUser | undefined;
+
+        if (user?.token) {
+          config.headers.Authorization = `Bearer ${user.token}`;
+        }
+        return config;
+      } catch (error) {
+        console.error("Error getting session:", error);
+        return config; // Continue request without auth header
+      }
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+  );
+
 
 axiosClient.interceptors.response.use(
   (res) => res,
   async (error) => {
     if (error.response?.status === 401) {
-      // toast.error("Session expired.");
       await signOut({ callbackUrl: "/login" });
     }
     return Promise.reject(error);
   }
 );
+}
 
 export default axiosClient;

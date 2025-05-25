@@ -13,19 +13,15 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith(path)
   );
 
-  // Handle token expiration
   if (token?.expired) {
-    const isExpired = Date.now() > (token.expired as number) * 1000;
-    if (isExpired) {
-      const response = NextResponse.redirect(new URL("/login", req.url));
-      // Clear all auth cookies (more thorough approach)
-      ["next-auth.session-token", "__Secure-next-auth.session-token"].forEach(
-        (cookie) => {
-          response.cookies.set(cookie, "", { maxAge: -1 });
-        }
-      );
-      return response;
-    }
+    const response = NextResponse.redirect(new URL("/login", req.url));
+    // Clear all auth cookies
+    ["next-auth.session-token", "__Secure-next-auth.session-token"].forEach(
+      (cookie) => {
+        response.cookies.set(cookie, "", { maxAge: -1 });
+      }
+    );
+    return response;
   }
 
   // Redirect rules

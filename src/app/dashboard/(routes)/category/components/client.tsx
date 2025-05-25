@@ -15,8 +15,17 @@ export default function CategoryClient({
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center items-start sm:justify-between space-y-3">
-        <Header title="Category" subtitle="Manage category for you store." />
-        <Button variant={"secondary"} onClick={()=>router.push("/dashboard/category/new")}>Add New</Button>
+        <Header
+          title="Category"
+          subtitle="Manage category for you store."
+          total={categories.length}
+        />
+        <Button
+          variant={"secondary"}
+          onClick={() => router.push("/dashboard/category/new")}
+        >
+          Add New
+        </Button>
       </div>
       <div className="my-4">
         <DataTable name="name" columns={columns} data={categories} />

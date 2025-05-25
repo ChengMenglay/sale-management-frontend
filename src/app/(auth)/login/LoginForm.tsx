@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { CHECK_CREDENTIALS, LOGIN_URL } from "@/lib/apiEndPoints";
+import { CHECK_CREDENTIALS } from "@/lib/apiEndPoints";
 import axiosClient from "@/lib/axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";

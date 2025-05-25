@@ -11,7 +11,7 @@ export default async function Product() {
   const session: CustomSession | null = await getServerSession(authOptions);
   const products = await getProducts(session?.user?.token as string);
   const formattedInventoryColumn: InventoryColumn[] = products.data.map(
-    (product: any) => ({
+    (product: InventoryColumn) => ({
       id: product.id,
       image: product.image,
       name: product.name,

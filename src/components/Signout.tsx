@@ -12,7 +12,7 @@ export default function Signout({
   name: string;
 }) {
   const onSignOut = async () => {
-    await axiosClient.post(LOGOUT_URL, {}).then((res) => {
+    await axiosClient.post(LOGOUT_URL, {}).then(() => {
       signOut({
         callbackUrl: "/login",
         redirect: true,

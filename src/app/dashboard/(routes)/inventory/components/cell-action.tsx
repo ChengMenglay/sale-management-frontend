@@ -46,6 +46,7 @@ export default function CellAction({ data }: CellActionProps) {
       setIsOpen(false);
       router.refresh();
     } catch (error) {
+      console.error("Error deleting product:", error);
       toast.error("Something went wrong!");
     } finally {
       setIsLoading(false);

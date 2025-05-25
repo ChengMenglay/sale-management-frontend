@@ -10,7 +10,7 @@ import { CategoryColumn } from "../components/columns";
 export default async function CategoryPage({
   params,
 }: {
-  params: { categoryId: string };
+  params: Promise<{ categoryId: string }>;
 }) {
   // Ensure params are awaited
   const { categoryId } = await params;

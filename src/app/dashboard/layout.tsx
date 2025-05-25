@@ -10,7 +10,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <AppSidebar />
       <main className="w-full">
         <Navbar />
-        <div className="p-3 space-y-4">
+        <div className="p-3 space-y-2">
           <BreadcrumbLinkComponent />
           <div>{children}</div>
         </div>

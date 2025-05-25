@@ -1,12 +1,17 @@
-import Header from "@/components/Header";
 import React from "react";
 import Overview from "./Overview";
+import authOptions, {
+  CustomSession,
+} from "../api/auth/[...nextauth]/authOption";
+import { getServerSession } from "next-auth";
+import { getOrders } from "@/dataFetch/orderFetch";
 
-export default function Overviews() {
+export default async function Overviews() {
+  const session: CustomSession | null = await getServerSession(authOptions);
+  const orders = await getOrders(session?.user?.token as string);
   return (
     <div>
-      <Header title="Dashboard" subtitle="Track data for your store." />
-      <Overview />
+      <Overview orders={orders} />
     </div>
   );
 }

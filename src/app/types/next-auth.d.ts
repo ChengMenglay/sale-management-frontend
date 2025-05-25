@@ -1,5 +1,5 @@
 // types/next-auth.d.ts
-
+/* eslint-disable */
 import NextAuth, { DefaultSession } from "next-auth";
 
 declare module "next-auth" {

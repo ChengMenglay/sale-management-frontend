@@ -11,7 +11,7 @@ import { getCategories } from "@/dataFetch/categoryFetch";
 export default async function ProductPage({
   params,
 }: {
-  params: { inventoryId: string };
+  params: Promise<{ inventoryId: string }>;
 }) {
   // Ensure params are awaited
   const { inventoryId } = await params;
