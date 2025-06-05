@@ -47,7 +47,7 @@ const formScema = z.object({
   price: z.coerce.number(),
   stock: z.coerce.number(),
   tax: z.coerce.number(),
-  detail: z.string().optional(),
+  detail: z.string().min(1, { message: "Detail must be uploaded!" }),
   barcode: z.string().min(1, { message: "Barcode must be required!" }),
   status: z.boolean().default(false),
   category_id: z.string().min(1, "Category is required!"),
@@ -122,6 +122,7 @@ export default function ProductForm({
             console.error("Error occurred:", error);
           });
       } else {
+        console.log("Data: ", data);
         await axiosClient
           .post("/product", {
             name: data?.name,
@@ -147,7 +148,8 @@ export default function ProductForm({
               // Only display the error toast without affecting the screen
               toast.error(errors[0] as string);
             }
-            console.log("Error occurred:", error);
+
+            console.log("Error occurred:", error.response);
           });
       }
     } catch (error) {

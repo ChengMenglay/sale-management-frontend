@@ -21,20 +21,25 @@ export default async function Orders() {
       return orderDetail;
     })
   );
-  const formattedOrdersColumn: OrdersColumn[] = orders.map((order:Order) => ({
-    id: order.id,
-    cashier: order.user.name,
-    items: orderDetails.length,
-    payment_method: order.payment_method,
-    payment_status: order.payment_status,
-    order_status: order.order_status,
-    total: formatter.format(order.total),
-    created_at: format(order.created_at, "dd/MM/yyyy"),
-  }));
+  const formattedOrdersColumn: OrdersColumn[] = orders.map(
+    (order: Order, index: number) => ({
+      id: order.id,
+      cashier: order.user.name,
+      items: orderDetails[index].length,
+      payment_method: order.payment_method,
+      payment_status: order.payment_status,
+      order_status: order.order_status,
+      total: formatter.format(order.total),
+      created_at: format(order.created_at, "dd/MM/yyyy"),
+    })
+  );
   return (
     <div className="flex-col">
       <div className="flex-1">
-        <OrderClient orders={formattedOrdersColumn} order_details={orderDetails} />
+        <OrderClient
+          orders={formattedOrdersColumn}
+          order_details={orderDetails}
+        />
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ export default async function Overviews() {
   const orders = await getOrders(session?.user?.token as string);
   return (
     <div>
-      <Overview orders={orders} />
+      <Overview orders={orders} token = {session?.user.token as string} />
     </div>
   );
 }

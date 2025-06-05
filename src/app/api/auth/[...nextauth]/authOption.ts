@@ -32,15 +32,17 @@ export const authOptions: AuthOptions = {
           user: customUser,
           accessToken: customUser.token,
           accessTokenExpires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+          expired: false,
         };
       }
-    
-      // Return previous token if not expired
+
+      // Check if token is expired
       if (Date.now() < (token.accessTokenExpires as number)) {
+        // Token is still valid
         return token;
       }
-    
-      // Token is expired
+
+      // Token has expired
       return {
         ...token,
         expired: true,
@@ -48,18 +50,31 @@ export const authOptions: AuthOptions = {
       };
     },
     async session({ session, token }) {
+      // If no token, return empty session
+      if (!token) {
+        return {
+          ...session,
+          user: {} as CustomUser,
+          expires: session.expires,
+          expired: true,
+          accessToken: null,
+        } as CustomSession;
+      }
+
       const sessionExpires = new Date(
         token.accessTokenExpires as number
       ).toISOString();
-    
+
       return {
         ...session,
         user: token.user as CustomUser,
         expires: sessionExpires,
-        expired: token.expired as boolean | undefined,
-        accessToken: token.expired ? null : (token.accessToken as string),
-      };
-    }
+        expired: (token.expired as boolean) || false,
+        accessToken: token.expired
+          ? null
+          : (token.accessToken as string | null),
+      } as CustomSession;
+    },
   },
   providers: [
     CredentialsProvider({
@@ -80,6 +95,11 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
+  session: {
+    strategy: "jwt", // Explicitly set strategy
+    maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+  },
+  secret: process.env.NEXTAUTH_SECRET, // Make sure this is set
 };
 
 export default authOptions;

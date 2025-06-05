@@ -10,7 +10,7 @@ export type OrdersColumn = {
   payment_method: string;
   payment_status: string;
   order_status: string;
-  total: number;
+  total: string;
   created_at: string;
 };
 

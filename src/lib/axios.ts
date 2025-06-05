@@ -3,14 +3,15 @@ import { API_URL } from "./apiEndPoints";
 import { getSession, signOut } from "next-auth/react";
 import { CustomUser } from "@/app/api/auth/[...nextauth]/authOption";
 
-const isClient = typeof window !== 'undefined';
+const isClient = typeof window !== "undefined";
 const axiosClient = axios.create({
   baseURL: API_URL,
   headers: {
     Accept: "application/json",
+    "Content-Type": "application/json",
     "X-Requested-With": "XMLHttpRequest",
   },
-  timeout: 30000,
+  timeout: 60000,
 });
 
 if (isClient) {
@@ -37,16 +38,15 @@ if (isClient) {
     }
   );
 
-
-axiosClient.interceptors.response.use(
-  (res) => res,
-  async (error) => {
-    if (error.response?.status === 401) {
-      await signOut({ callbackUrl: "/login" });
+  axiosClient.interceptors.response.use(
+    (res) => res,
+    async (error) => {
+      if (error.response?.status === 401) {
+        await signOut({ callbackUrl: "/login" });
+      }
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
-  }
-);
+  );
 }
 
 export default axiosClient;

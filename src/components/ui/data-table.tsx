@@ -27,7 +27,7 @@ import React from "react";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  name: string;
+  name?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -57,14 +57,16 @@ export function DataTable<TData, TValue>({
   return (
     <div>
       <div className="flex items-center py-4">
-        <Input
-          placeholder={`Filter ${name}...`}
-          value={(table.getColumn(name)?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn(name)?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+        {name && (
+          <Input
+            placeholder={`Filter ${name}...`}
+            value={(table.getColumn(name)?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn(name)?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+        )}
       </div>
       <div className="rounded-md">
         <Table className="rounded-lg overflow-hidden">

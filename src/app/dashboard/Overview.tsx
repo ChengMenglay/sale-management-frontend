@@ -22,11 +22,18 @@ import { Calendar } from "@/components/ui/calendar";
 import Header from "@/components/Header";
 import { LineChartComponent } from "@/components/LineChart";
 import { PaymentBarChart } from "@/components/PaymentBarChart";
+import { DataTable } from "@/components/ui/data-table";
+import { columns, OrdersColumn } from "./(routes)/orders/components/columns";
+import { getByOrderId } from "@/dataFetch/orderFetch";
 type OverViewType = {
   orders: Order[];
+  token: string;
 };
-export default function Overview({ orders }: OverViewType) {
+export default function Overview({ orders, token }: OverViewType) {
   const { data: session, status } = useSession();
+  const [formattedOrdersColumn, setFormattedOrdersColumn] = useState<
+    OrdersColumn[]
+  >([]);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>();
   useEffect(() => {
     if (status === "loading" || !session?.expires) return;
@@ -63,6 +70,37 @@ export default function Overview({ orders }: OverViewType) {
   );
   const averageSale =
     paidOrders.length > 0 ? totalRevenue / paidOrders.length : 0;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const recentOrders = orders
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+        .slice(0, 10);
+
+      const results = await Promise.all(
+        recentOrders.map(async (order) => {
+          const orderDetail = await getByOrderId(order.id, token);
+          return {
+            id: order.id,
+            cashier: order.user.name ?? "Unknown",
+            items: orderDetail.length,
+            payment_method: order.payment_method,
+            payment_status: order.payment_status,
+            order_status: order.order_status,
+            total: formatter.format(order.total),
+            created_at: format(order.created_at, "dd/MM/yyyy"),
+          };
+        })
+      );
+
+      setFormattedOrdersColumn(results);
+    };
+
+    fetchData();
+  }, [orders, token]);
   return (
     <div>
       <div className="flex justify-between items-center">
@@ -150,6 +188,9 @@ export default function Overview({ orders }: OverViewType) {
         <LineChartComponent filteredOrders={filteredOrders} />
         <PaymentBarChart filteredData={filteredOrders} />
       </div>
+      <Card className="my-6">
+        <DataTable columns={columns} data={formattedOrdersColumn} />
+      </Card>
     </div>
   );
 }
