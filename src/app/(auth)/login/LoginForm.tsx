@@ -72,7 +72,7 @@ export default function LoginForm() {
     }
   };
   return (
-    <div className=" sm:p-6 sm:mx-auto sm:w-full sm:max-w-2xl">
+    <div className=" p-2  sm:mx-auto sm:max-w-2xl w-full ">
       <h1 className="sm:my-10 my-6 font-bold text-center sm:text-3xl text-xl">
         Sign in your account
       </h1>

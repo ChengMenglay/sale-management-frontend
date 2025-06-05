@@ -113,7 +113,7 @@ export default function OrderClient({
           subtitle="Manage order for you store."
           total={orders.length}
         />
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-1">
           <Button onClick={handleExport}>Export As CSV</Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -141,7 +141,7 @@ export default function OrderClient({
               <Button
                 variant={"outline"}
                 className={cn(
-                  "w-[200px] justify-start text-left font-normal",
+                  "w-[150px] justify-start text-left font-normal",
                   !date && "text-muted-foreground"
                 )}
               >
